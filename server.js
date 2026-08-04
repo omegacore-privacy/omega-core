@@ -227,9 +227,11 @@ wss.on('connection', (ws, req) => {
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`Omega Core server in ascolto su http://localhost:${PORT}`);
+
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`✅ Omega Core server listening on port ${PORT}`);
+
   if (!ADMIN_ANSWER_HASH) {
-    console.warn('ATTENZIONE: ADMIN_ANSWER_HASH non impostato in .env — il login admin è disabilitato. Esegui "npm run gen-admin-hash".');
+    console.warn("⚠️ ADMIN_ANSWER_HASH not set.");
   }
 });
