@@ -58,7 +58,6 @@ body::before {
   z-index: 1;
 }
 
-/* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -78,13 +77,11 @@ body::before {
   background: var(--accent-primary);
 }
 
-/* Selection */
 ::selection {
   background: var(--accent-primary);
   color: var(--text-primary);
 }
 
-/* Focus states */
 :focus-visible {
   outline: 2px solid var(--accent-primary);
   outline-offset: 2px;

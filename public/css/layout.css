@@ -8,7 +8,6 @@
   z-index: 2;
 }
 
-/* LEFT SIDEBAR - SERVER RAIL */
 .server-rail {
   width: 72px;
   background: var(--bg-secondary);
@@ -118,7 +117,6 @@
   background: rgba(239, 68, 68, 0.1);
 }
 
-/* CHANNEL PANEL */
 .channel-panel {
   width: 280px;
   background: var(--bg-tertiary);
@@ -281,7 +279,6 @@
   font-family: 'Courier New', monospace;
 }
 
-/* MAIN AREA */
 .main-area {
   flex: 1;
   display: flex;
@@ -352,7 +349,6 @@
   stroke-width: 2;
 }
 
-/* MESSAGES CONTAINER */
 .messages-container {
   flex: 1;
   overflow-y: auto;
@@ -369,7 +365,6 @@
   gap: 8px;
 }
 
-/* MESSAGE FOOTER */
 .message-footer {
   padding: 16px 20px;
   flex-shrink: 0;
@@ -448,7 +443,6 @@
   font-family: 'Courier New', monospace;
 }
 
-/* RIGHT SIDEBAR - MEMBERS */
 .members-panel {
   width: 260px;
   background: var(--bg-tertiary);
@@ -542,7 +536,6 @@
   color: var(--text-muted);
 }
 
-/* RESPONSIVE */
 @media (max-width: 1200px) {
   .members-panel {
     display: none;
