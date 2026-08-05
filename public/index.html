@@ -1,911 +1,229 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Omega Core</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-:root{
-  --void:#0a0a0f;
-  --void-2:#0e0d13;
-  --ash:#16151d;
-  --ash-2:#1c1a24;
-  --ash-3:#242130;
-  --line:#2a2733;
-  --bone:#d8d2c4;
-  --bone-dim:#948d7d;
-  --blood:#9c2a3a;
-  --blood-bright:#c8394d;
-  --ember:#c9722c;
-  --ember-glow:#e8974f;
-  --wraith:#7b6bb0;
-  --wraith-glow:#a394d9;
-  --ok:#4a7c59;
-  --font-display:'Cinzel', serif;
-  --font-body:'Inter', sans-serif;
-  --font-mono:'JetBrains Mono', monospace;
-}
-*{box-sizing:border-box; margin:0; padding:0;}
-body{
-  background:
-    radial-gradient(ellipse 900px 500px at 20% -10%, rgba(156,42,58,0.10), transparent 60%),
-    radial-gradient(ellipse 700px 500px at 100% 10%, rgba(123,107,176,0.08), transparent 60%),
-    var(--void);
-  color:var(--bone);
-  font-family:var(--font-body);
-  height:100vh;
-  overflow:hidden;
-  position:relative;
-}
-body::before{
-  content:'';
-  position:fixed; inset:0;
-  background-image:
-    repeating-linear-gradient(0deg, rgba(255,255,255,0.012) 0px, transparent 1px, transparent 2px),
-    repeating-linear-gradient(90deg, rgba(255,255,255,0.012) 0px, transparent 1px, transparent 2px);
-  pointer-events:none;
-  z-index:1;
-}
-::-webkit-scrollbar{width:8px;}
-::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:var(--ash-3); border-radius:4px;}
-
-/* ===== GATE (riddle / secret question) ===== */
-#gate{
-  position:fixed; inset:0; z-index:100;
-  display:flex; align-items:center; justify-content:center;
-  background:
-    radial-gradient(circle at 50% 40%, rgba(156,42,58,0.12), transparent 55%),
-    var(--void);
-}
-.sigil{
-  width:64px; height:64px; margin:0 auto 22px;
-  border:2px solid var(--ember);
-  border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  position:relative;
-  animation:flicker 3.2s infinite ease-in-out;
-}
-.sigil::before{
-  content:''; position:absolute; inset:-8px;
-  border:1px solid var(--blood); border-radius:50%; opacity:.5;
-}
-.sigil svg{width:28px; height:28px; stroke:var(--ember-glow); fill:none; stroke-width:1.4;}
-@keyframes flicker{
-  0%,100%{box-shadow:0 0 14px 2px rgba(201,114,44,0.35); border-color:var(--ember);}
-  45%{box-shadow:0 0 22px 5px rgba(201,114,44,0.55); border-color:var(--ember-glow);}
-  60%{box-shadow:0 0 9px 1px rgba(201,114,44,0.25); border-color:var(--ember);}
-}
-.gate-card{
-  width:min(420px, 90vw);
-  background:linear-gradient(180deg, var(--ash-2), var(--ash));
-  border:1px solid var(--line);
-  border-radius:6px;
-  padding:40px 34px;
-  text-align:center;
-  box-shadow:0 30px 60px rgba(0,0,0,0.5);
-}
-.gate-title{font-family:var(--font-display); letter-spacing:.14em; font-size:22px; font-weight:700; color:var(--bone);}
-.gate-sub{font-size:12.5px; color:var(--bone-dim); margin-top:8px; letter-spacing:.03em;}
-.gate-form{margin-top:26px; text-align:left;}
-.gate-label{font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--bone-dim); display:block; margin-bottom:8px;}
-.gate-input{
-  width:100%; background:var(--void-2); border:1px solid var(--line); border-radius:4px;
-  color:var(--bone); padding:11px 12px; font-family:var(--font-body); font-size:14px;
-}
-.gate-input:focus{outline:none; border-color:var(--ember);}
-.gate-btn{
-  width:100%; margin-top:18px; padding:12px; background:var(--blood); border:none; border-radius:4px;
-  color:var(--bone); font-family:var(--font-display); letter-spacing:.08em; font-size:13px; cursor:pointer;
-  transition:background .15s;
-}
-.gate-btn:hover{background:var(--blood-bright);}
-.gate-error{color:var(--blood-bright); font-size:12px; margin-top:12px; min-height:14px;}
-.gate-skip{display:block; text-align:center; margin-top:16px; font-size:12px; color:var(--bone-dim); cursor:pointer; text-decoration:underline; text-underline-offset:3px;}
-.gate-skip:hover{color:var(--bone);}
-
-/* ===== APP SHELL ===== */
-#app{display:none; height:100vh; position:relative; z-index:2;}
-#app.active{display:flex;}
-
-.rail{
-  width:72px; background:var(--void-2); border-right:1px solid var(--line);
-  display:flex; flex-direction:column; align-items:center; padding:14px 0; gap:10px;
-  flex-shrink:0;
-}
-.rail-icon{
-  width:44px; height:44px; border-radius:50%;
-  background:var(--ash-2); border:1px solid var(--line);
-  display:flex; align-items:center; justify-content:center;
-  cursor:pointer; position:relative; transition:.15s;
-  font-family:var(--font-display); font-weight:700; color:var(--bone-dim); font-size:13px;
-}
-.rail-icon:hover, .rail-icon.active{border-color:var(--ember); color:var(--ember-glow); box-shadow:0 0 12px rgba(201,114,44,0.25);}
-.rail-icon.active::before{content:''; position:absolute; left:-14px; width:4px; height:22px; background:var(--ember); border-radius:2px;}
-.rail-sep{width:28px; height:1px; background:var(--line); margin:4px 0;}
-.rail-icon.admin{color:var(--blood-bright); border-color:var(--blood); margin-top:auto;}
-
-.channels{
-  width:250px; background:var(--ash); border-right:1px solid var(--line);
-  display:flex; flex-direction:column; flex-shrink:0;
-}
-.ch-header{
-  padding:16px 18px; border-bottom:1px solid var(--line);
-  font-family:var(--font-display); font-size:15px; letter-spacing:.06em; font-weight:700;
-}
-.ch-header small{display:block; font-family:var(--font-body); font-weight:400; font-size:11px; color:var(--bone-dim); letter-spacing:0; margin-top:3px;}
-.ch-list{flex:1; overflow-y:auto; padding:14px 10px;}
-.ch-group{font-size:10.5px; text-transform:uppercase; letter-spacing:.1em; color:var(--bone-dim); padding:10px 8px 6px;}
-.ch-item{
-  display:flex; align-items:center; gap:8px;
-  padding:8px 10px; border-radius:4px; cursor:pointer; font-size:14px; color:var(--bone-dim);
-  margin-bottom:2px; transition:.12s;
-}
-.ch-item:hover{background:var(--ash-2); color:var(--bone);}
-.ch-item.active{background:var(--ash-3); color:var(--bone);}
-.ch-item .dot{width:6px; height:6px; border-radius:50%; background:var(--bone-dim); flex-shrink:0;}
-.ch-item.online .dot{background:var(--ok); box-shadow:0 0 5px var(--ok);}
-.ch-item .lock{width:12px; height:12px; opacity:.6; flex-shrink:0;}
-.user-strip{
-  padding:10px 12px; border-top:1px solid var(--line); display:flex; align-items:center; gap:10px;
-  background:var(--void-2);
-}
-.avatar-mini{width:30px; height:30px; border-radius:50%; background:var(--ash-3); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:12px; font-family:var(--font-mono); color:var(--wraith-glow);}
-.user-strip .uname{font-size:12.5px; font-weight:600;}
-.user-strip .uid{font-size:10.5px; color:var(--bone-dim); font-family:var(--font-mono);}
-.strip-btn{margin-left:auto; width:28px; height:28px; border-radius:4px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--bone-dim); background:transparent; border:none;}
-.strip-btn:hover{background:var(--ash-2); color:var(--bone);}
-
-.main{flex:1; display:flex; flex-direction:column; min-width:0;}
-.main-header{
-  height:52px; border-bottom:1px solid var(--line); display:flex; align-items:center; padding:0 18px; gap:10px;
-  background:var(--ash); flex-shrink:0;
-}
-.main-header .ch-name{font-weight:600; font-size:14.5px;}
-.main-header .ch-desc{font-size:12px; color:var(--bone-dim); border-left:1px solid var(--line); padding-left:10px; margin-left:2px;}
-.e2e-badge{
-  margin-left:auto; display:flex; align-items:center; gap:6px; font-size:11px; color:var(--ok);
-  font-family:var(--font-mono); border:1px solid rgba(74,124,89,0.4); padding:4px 9px; border-radius:20px; background:rgba(74,124,89,0.08);
-}
-.e2e-badge svg{width:12px; height:12px; stroke:var(--ok); fill:none; stroke-width:2;}
-
-.messages{flex:1; overflow-y:auto; padding:18px 22px; display:flex; flex-direction:column; gap:14px;}
-.msg{display:flex; gap:12px;}
-.msg .avatar-mini{width:36px; height:36px; font-size:13px; flex-shrink:0;}
-.msg-body{min-width:0;}
-.msg-meta{display:flex; align-items:baseline; gap:8px; margin-bottom:2px;}
-.msg-name{font-size:14px; font-weight:600;}
-.msg-name.admin{color:var(--blood-bright);}
-.msg-time{font-size:10.5px; color:var(--bone-dim); font-family:var(--font-mono);}
-.msg-lock{width:10px; height:10px; opacity:.5;}
-.msg-text{font-size:14px; color:#c9c3b4; line-height:1.5; word-break:break-word;}
-.msg.system .msg-text{color:var(--bone-dim); font-style:italic; font-size:13px;}
-
-.composer{padding:16px 22px 20px; flex-shrink:0;}
-.composer-inner{
-  display:flex; align-items:center; gap:10px; background:var(--ash-2); border:1px solid var(--line);
-  border-radius:8px; padding:6px 6px 6px 14px;
-}
-.composer-inner input{
-  flex:1; background:transparent; border:none; color:var(--bone); font-family:var(--font-body); font-size:14px; padding:10px 0;
-}
-.composer-inner input:focus{outline:none;}
-.composer-inner input::placeholder{color:var(--bone-dim);}
-.send-btn{
-  width:36px; height:36px; border-radius:6px; background:var(--blood); border:none; color:var(--bone);
-  display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;
-}
-.send-btn:hover{background:var(--blood-bright);}
-.composer-hint{font-size:10.5px; color:var(--bone-dim); margin-top:7px; padding-left:4px; font-family:var(--font-mono);}
-
-.members{
-  width:220px; background:var(--ash); border-left:1px solid var(--line); flex-shrink:0; overflow-y:auto; padding:16px 12px;
-}
-.members-group{font-size:10.5px; text-transform:uppercase; letter-spacing:.1em; color:var(--bone-dim); padding:6px 6px 8px;}
-.member{display:flex; align-items:center; gap:9px; padding:6px; border-radius:4px; cursor:default;}
-.member:hover{background:var(--ash-2);}
-.member .avatar-mini{width:26px; height:26px; font-size:11px;}
-.member-name{font-size:13px; color:var(--bone-dim);}
-.member-name.you{color:var(--bone);}
-
-/* ===== MODALS (settings / admin) ===== */
-.modal-overlay{position:fixed; inset:0; background:rgba(6,5,8,0.72); z-index:60; display:none; align-items:center; justify-content:center;}
-.modal-overlay.active{display:flex;}
-.modal{
-  width:min(480px,92vw); max-height:84vh; overflow-y:auto; background:linear-gradient(180deg,var(--ash-2),var(--ash));
-  border:1px solid var(--line); border-radius:8px; padding:28px 26px;
-}
-.modal h2{font-family:var(--font-display); font-size:18px; letter-spacing:.05em; margin-bottom:4px;}
-.modal .modal-sub{font-size:12px; color:var(--bone-dim); margin-bottom:20px;}
-.setting-row{display:flex; align-items:center; justify-content:space-between; padding:13px 0; border-bottom:1px solid var(--line);}
-.setting-row:last-child{border-bottom:none;}
-.setting-label{font-size:13.5px;}
-.setting-desc{font-size:11.5px; color:var(--bone-dim); margin-top:3px; max-width:300px;}
-.toggle{width:40px; height:22px; background:var(--ash-3); border-radius:20px; position:relative; cursor:pointer; border:1px solid var(--line); flex-shrink:0;}
-.toggle.on{background:rgba(74,124,89,0.35); border-color:var(--ok);}
-.toggle::after{content:''; position:absolute; width:16px; height:16px; border-radius:50%; background:var(--bone-dim); top:2px; left:2px; transition:.15s;}
-.toggle.on::after{left:20px; background:var(--ok);}
-.lang-select{background:var(--void-2); border:1px solid var(--line); color:var(--bone); padding:7px 10px; border-radius:4px; font-size:13px; font-family:var(--font-body);}
-.modal-close{position:absolute; top:18px; right:18px; cursor:pointer; color:var(--bone-dim); background:none; border:none; font-size:18px;}
-.modal{position:relative;}
-.admin-panel-body{margin-top:6px;}
-.admin-stat{display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--line); font-size:13px;}
-.admin-stat span:last-child{font-family:var(--font-mono); color:var(--ember-glow);}
-.badge-admin{display:inline-block; font-family:var(--font-mono); font-size:10px; letter-spacing:.05em; color:var(--blood-bright); border:1px solid var(--blood); padding:2px 7px; border-radius:20px; margin-left:8px;}
-
-@media (max-width:860px){
-  .members{display:none;}
-  .channels{width:210px;}
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Omega Core — Encrypted Communication</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
 </head>
 <body>
-
-<!-- ============ GATE ============ -->
-<div id="gate">
-  <div class="gate-card">
-    <div class="sigil"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 3"/></svg></div>
-    <div class="gate-title" data-i18n="gate_title">OMEGA CORE</div>
-    <div class="gate-sub" data-i18n="gate_sub">Varco sigillato. Solo chi conosce il nome puo entrare.</div>
-    <div class="gate-form">
-      <label class="gate-label" data-i18n="gate_q">Come ti chiami?</label>
-      <input type="text" id="gate-answer" class="gate-input" autocomplete="off" spellcheck="false">
-      <button class="gate-btn" id="gate-submit" data-i18n="gate_enter">VARCA LA SOGLIA</button>
-      <div class="gate-error" id="gate-error"></div>
-    </div>
-    <div class="gate-skip" id="gate-skip" data-i18n="gate_skip">Entra come ospite anonimo</div>
-  </div>
-</div>
-
-<!-- ============ APP ============ -->
-<div id="app">
-  <div class="rail">
-    <div class="rail-icon active" title="Omega Core">Ω</div>
-    <div class="rail-sep"></div>
-    <div class="rail-icon" title="Server 2">✦</div>
-    <div class="rail-icon" title="Server 3">✧</div>
-    <div class="rail-icon admin" id="admin-rail-btn" title="Admin" style="display:none;">◆</div>
-  </div>
-
-  <div class="channels">
-    <div class="ch-header">OMEGA CORE<small data-i18n="server_sub">nodo primario · cifrato</small></div>
-    <div class="ch-list">
-      <div class="ch-group" data-i18n="grp_public">Chat pubblica</div>
-      <div class="ch-item active online" data-channel="salone" data-name="Salone">
-        <span class="dot"></span> <span data-i18n="ch_salone">#salone-grande</span>
+  <!-- GATE SCREEN -->
+  <div id="gate-screen" class="gate-screen">
+    <div class="gate-container">
+      <div class="gate-sigil">
+        <svg viewBox="0 0 100 100" width="80" height="80">
+          <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M50 30 L70 50 L50 70 L30 50 Z" fill="none" stroke="currentColor" stroke-width="2"/>
+          <circle cx="50" cy="50" r="6" fill="currentColor"/>
+        </svg>
       </div>
-      <div class="ch-group" data-i18n="grp_private">Messaggi privati</div>
-      <div id="dm-list"></div>
-      <div class="composer-hint" id="dm-empty-hint" data-i18n="dm_empty" style="padding:6px 8px;">Nessun altro utente connesso al momento</div>
-    </div>
-    <div class="user-strip">
-      <div class="avatar-mini" id="my-avatar">??</div>
-      <div>
-        <div class="uname" id="my-uname" data-i18n="guest">Ospite</div>
-        <div class="uid" id="my-uid">id: ----</div>
+      <h1 class="gate-title" data-i18n="gate_title">OMEGA CORE</h1>
+      <p class="gate-subtitle" data-i18n="gate_subtitle">The gate is sealed. Only those who know the name may enter.</p>
+      
+      <div class="gate-form">
+        <label class="gate-label" data-i18n="gate_prompt">What is your name?</label>
+        <input type="text" id="gate-name-input" class="gate-input" autocomplete="off" spellcheck="false">
+        <button id="gate-submit-btn" class="gate-button" data-i18n="gate_submit">Cross the Threshold</button>
+        <div id="gate-error" class="gate-error"></div>
       </div>
-      <button class="strip-btn" id="open-settings" title="Impostazioni">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.34 1.87l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.7 1.7 0 00-1.87-.34 1.7 1.7 0 00-1 1.55V21a2 2 0 01-4 0v-.09a1.7 1.7 0 00-1-1.55 1.7 1.7 0 00-1.87.34l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.7 1.7 0 00.34-1.87 1.7 1.7 0 00-1.55-1H3a2 2 0 010-4h.09a1.7 1.7 0 001.55-1 1.7 1.7 0 00-.34-1.87l-.06-.06a2 2 0 112.83-2.83l.06.06a1.7 1.7 0 001.87.34H9a1.7 1.7 0 001-1.55V3a2 2 0 014 0v.09a1.7 1.7 0 001 1.55 1.7 1.7 0 001.87-.34l.06-.06a2 2 0 112.83 2.83l-.06.06a1.7 1.7 0 00-.34 1.87V9a1.7 1.7 0 001.55 1H21a2 2 0 010 4h-.09a1.7 1.7 0 00-1.55 1z"/></svg>
-      </button>
+      
+      <div class="gate-divider"></div>
+      <button id="gate-guest-btn" class="gate-guest-button" data-i18n="gate_guest">Enter as Anonymous Guest</button>
     </div>
   </div>
 
-  <div class="main">
-    <div class="main-header">
-      <span class="ch-name" id="main-ch-name">#salone-grande</span>
-      <span class="ch-desc" id="main-ch-desc" data-i18n="salone_desc">la piazza del nodo</span>
-      <div class="e2e-badge"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="1"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span data-i18n="e2e_on">cifrato end-to-end</span></div>
-    </div>
-    <div class="messages" id="messages"></div>
-    <div class="composer">
-      <div class="composer-inner">
-        <input type="text" id="msg-input" data-i18n-ph="msg_placeholder" placeholder="Scrivi un messaggio cifrato...">
-        <button class="send-btn" id="send-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
-        </button>
+  <!-- MAIN APPLICATION -->
+  <div id="app-shell" class="app-shell" style="display: none;">
+    <!-- LEFT SIDEBAR - SERVER RAIL -->
+    <aside class="server-rail">
+      <div class="rail-header">
+        <div class="rail-icon active" data-server="omega" title="Omega Core">Ω</div>
       </div>
-      <div class="composer-hint" id="composer-hint" data-i18n="composer_hint">IP nascosto · chiavi generate localmente · nessun log del testo in chiaro</div>
-    </div>
-  </div>
-
-  <div class="members">
-    <div class="members-group" data-i18n="grp_online">Presenze — <span id="online-count">1</span></div>
-    <div class="member"><div class="avatar-mini" id="my-avatar-2">??</div><div class="member-name you" id="member-you">Tu</div></div>
-    <div id="member-list"></div>
-  </div>
-</div>
-
-<!-- ============ SETTINGS MODAL ============ -->
-<div class="modal-overlay" id="settings-overlay">
-  <div class="modal">
-    <button class="modal-close" data-close="settings-overlay">✕</button>
-    <h2 data-i18n="settings_title">Impostazioni</h2>
-    <div class="modal-sub" data-i18n="settings_sub">Privacy, sicurezza e lingua del nodo</div>
-
-    <div class="setting-row">
-      <div>
-        <div class="setting-label" data-i18n="s_hideip">Nascondi IP agli altri utenti</div>
-        <div class="setting-desc" data-i18n="s_hideip_desc">Il server instrada i messaggi e non inoltra mai il tuo indirizzo IP agli altri client.</div>
+      <div class="rail-divider"></div>
+      <div class="rail-user-section">
+        <button id="settings-toggle" class="rail-button" title="Settings">⚙</button>
+        <button id="admin-toggle" class="rail-button admin-button" title="Admin" style="display: none;">◆</button>
       </div>
-      <div class="toggle on" id="toggle-hideip"></div>
-    </div>
-    <div class="setting-row">
-      <div>
-        <div class="setting-label" data-i18n="s_e2e">Crittografia end-to-end</div>
-        <div class="setting-desc" data-i18n="s_e2e_desc">Le chiavi vengono generate ed elaborate solo sul tuo dispositivo.</div>
+    </aside>
+
+    <!-- LEFT PANEL - CHANNELS & DMS -->
+    <aside class="channel-panel">
+      <div class="panel-header">
+        <h2 class="panel-title">OMEGA CORE</h2>
+        <p class="panel-subtitle" data-i18n="panel_subtitle">encrypted node</p>
       </div>
-      <div class="toggle on" id="toggle-e2e"></div>
-    </div>
-    <div class="setting-row">
-      <div>
-        <div class="setting-label" data-i18n="s_antixss">Sanificazione anti-XSS</div>
-        <div class="setting-desc" data-i18n="s_antixss_desc">Ogni messaggio viene neutralizzato prima di essere mostrato a schermo.</div>
+
+      <div class="channel-section">
+        <div class="section-header" data-i18n="section_public">Public Channels</div>
+        <div class="channel-item active" data-channel="salone">
+          <div class="channel-icon">📢</div>
+          <div class="channel-name" data-i18n="channel_main">#general</div>
+          <div class="channel-indicator"></div>
+        </div>
       </div>
-      <div class="toggle on" id="toggle-xss"></div>
-    </div>
-    <div class="setting-row">
-      <div>
-        <div class="setting-label" data-i18n="s_ephemeral">Messaggi effimeri</div>
-        <div class="setting-desc" data-i18n="s_ephemeral_desc">Elimina automaticamente i messaggi dopo essere stati letti.</div>
+
+      <div class="channel-section">
+        <div class="section-header" data-i18n="section_private">Direct Messages</div>
+        <div id="dm-list" class="dm-list"></div>
+        <div id="dm-empty" class="dm-empty" data-i18n="dm_empty">No users online</div>
       </div>
-      <div class="toggle" id="toggle-ephemeral"></div>
-    </div>
-    <div class="setting-row">
-      <div>
-        <div class="setting-label" data-i18n="s_lang">Lingua</div>
-        <div class="setting-desc" data-i18n="s_lang_desc">Cambia la lingua dell'interfaccia</div>
-      </div>
-      <select class="lang-select" id="lang-select">
-        <option value="it">Italiano</option>
-        <option value="en">English</option>
-        <option value="es">Español</option>
-        <option value="fr">Français</option>
-        <option value="de">Deutsch</option>
-      </select>
-    </div>
-    <div class="setting-row">
-      <div>
-        <div class="setting-label" data-i18n="s_fingerprint">Impronta chiave pubblica</div>
-        <div class="setting-desc" id="my-fingerprint" style="font-family:var(--font-mono); color:var(--ember-glow);">----</div>
-      </div>
-    </div>
-  </div>
-</div>
 
-<!-- ============ ADMIN MODAL ============ -->
-<div class="modal-overlay" id="admin-overlay">
-  <div class="modal">
-    <button class="modal-close" data-close="admin-overlay">✕</button>
-    <h2 data-i18n="admin_title">Pannello di controllo<span class="badge-admin">ADMIN</span></h2>
-    <div class="modal-sub" data-i18n="admin_sub">Visibile solo a chi ha varcato la soglia con la risposta corretta</div>
-    <div class="admin-panel-body">
-      <div class="admin-stat"><span data-i18n="admin_users">Utenti connessi</span><span id="stat-users">4</span></div>
-      <div class="admin-stat"><span data-i18n="admin_channels">Canali attivi</span><span>3</span></div>
-      <div class="admin-stat"><span data-i18n="admin_ddos">Tentativi bloccati (anti-DDoS)</span><span id="stat-ddos">0</span></div>
-      <div class="admin-stat"><span data-i18n="admin_xss">Payload XSS neutralizzati</span><span id="stat-xss">0</span></div>
-      <div class="admin-stat"><span data-i18n="admin_uptime">Nodo attivo da</span><span id="stat-uptime">00:00:00</span></div>
-    </div>
-    <div class="modal-sub" style="margin-top:18px;" data-i18n="admin_note">Nota: questa demo gira lato client. Il backend reale (bot Discord + server) applica il rate-limiting e i controlli di sicurezza descritti qui.</div>
-  </div>
-</div>
-
-<script>
-/* =========================================================
-   OMEGA CORE — front-end shell
-   NOTA: questo file è la UI. La logica di sicurezza reale
-   (autenticazione, rate-limit, anti-DDoS, storage messaggi)
-   deve vivere sul server — qui è predisposta l'integrazione
-   ma i dati sono simulati in locale finché il backend non è
-   collegato via WebSocket.
-   ========================================================= */
-
-/* ---------- i18n ---------- */
-const I18N = {
-  it: {
-    gate_title:"OMEGA CORE", gate_sub:"Varco sigillato. Solo chi conosce il nome può entrare.",
-    gate_q:"Come ti chiami?", gate_enter:"VARCA LA SOGLIA", gate_skip:"Entra come ospite anonimo",
-    guest:"Ospite", server_sub:"nodo primario · cifrato", grp_public:"Chat pubblica", grp_private:"Messaggi privati",
-    ch_salone:"#salone-grande", salone_desc:"la piazza del nodo", e2e_on:"cifrato end-to-end",
-    msg_placeholder:"Scrivi un messaggio cifrato...", composer_hint:"IP nascosto · chiavi generate localmente · nessun log del testo in chiaro",
-    grp_online:"Presenze", settings_title:"Impostazioni", settings_sub:"Privacy, sicurezza e lingua del nodo",
-    s_hideip:"Nascondi IP agli altri utenti", s_hideip_desc:"Il server instrada i messaggi e non inoltra mai il tuo indirizzo IP agli altri client.",
-    s_e2e:"Crittografia end-to-end", s_e2e_desc:"Le chiavi vengono generate ed elaborate solo sul tuo dispositivo.",
-    s_antixss:"Sanificazione anti-XSS", s_antixss_desc:"Ogni messaggio viene neutralizzato prima di essere mostrato a schermo.",
-    s_ephemeral:"Messaggi effimeri", s_ephemeral_desc:"Elimina automaticamente i messaggi dopo essere stati letti.",
-    s_lang:"Lingua", s_lang_desc:"Cambia la lingua dell'interfaccia", s_fingerprint:"Impronta chiave pubblica",
-    admin_title:"Pannello di controllo", admin_sub:"Visibile solo a chi ha varcato la soglia con la risposta corretta",
-    admin_users:"Utenti connessi", admin_channels:"Canali attivi", admin_ddos:"Tentativi bloccati (anti-DDoS)",
-    admin_xss:"Payload XSS neutralizzati", admin_uptime:"Nodo attivo da",
-    admin_note:"Nota: questa demo gira lato client. Il backend reale (bot Discord + server) applica il rate-limiting e i controlli di sicurezza descritti qui.",
-    gate_wrong:"Risposta errata. Il sigillo non si apre.", you:"Tu",
-    dm_empty:"Nessun altro utente connesso al momento", conn_error:"Impossibile collegarsi al nodo. Il server è acceso?", connecting:"Connessione al nodo..."
-  },
-  en: {
-    gate_title:"OMEGA CORE", gate_sub:"The gate is sealed. Only those who know the name may enter.",
-    gate_q:"What is your name?", gate_enter:"CROSS THE THRESHOLD", gate_skip:"Enter as anonymous guest",
-    guest:"Guest", server_sub:"primary node · encrypted", grp_public:"Public chat", grp_private:"Private messages",
-    ch_salone:"#great-hall", salone_desc:"the node's square", e2e_on:"end-to-end encrypted",
-    msg_placeholder:"Write an encrypted message...", composer_hint:"IP hidden · keys generated locally · no plaintext logs",
-    grp_online:"Present", settings_title:"Settings", settings_sub:"Privacy, security and node language",
-    s_hideip:"Hide IP from other users", s_hideip_desc:"The server routes messages and never forwards your IP to other clients.",
-    s_e2e:"End-to-end encryption", s_e2e_desc:"Keys are generated and processed only on your device.",
-    s_antixss:"Anti-XSS sanitization", s_antixss_desc:"Every message is neutralized before being shown on screen.",
-    s_ephemeral:"Ephemeral messages", s_ephemeral_desc:"Automatically delete messages after they're read.",
-    s_lang:"Language", s_lang_desc:"Change the interface language", s_fingerprint:"Public key fingerprint",
-    admin_title:"Control panel", admin_sub:"Visible only to those who crossed the gate with the right answer",
-    admin_users:"Connected users", admin_channels:"Active channels", admin_ddos:"Blocked attempts (anti-DDoS)",
-    admin_xss:"Neutralized XSS payloads", admin_uptime:"Node uptime",
-    admin_note:"Note: this demo runs client-side. The real backend (Discord bot + server) enforces the rate-limiting and security checks described here.",
-    gate_wrong:"Wrong answer. The seal does not open.", you:"You",
-    dm_empty:"No other users connected right now", conn_error:"Could not connect to the node. Is the server running?", connecting:"Connecting to the node..."
-  },
-  es: {
-    gate_title:"OMEGA CORE", gate_sub:"El portal está sellado. Solo quien conoce el nombre puede entrar.",
-    gate_q:"¿Cómo te llamas?", gate_enter:"CRUZA EL UMBRAL", gate_skip:"Entrar como invitado anónimo",
-    guest:"Invitado", server_sub:"nodo primario · cifrado", grp_public:"Chat pública", grp_private:"Mensajes privados",
-    ch_salone:"#gran-salón", salone_desc:"la plaza del nodo", e2e_on:"cifrado de extremo a extremo",
-    msg_placeholder:"Escribe un mensaje cifrado...", composer_hint:"IP oculta · claves generadas localmente · sin registro del texto plano",
-    grp_online:"Presentes", settings_title:"Ajustes", settings_sub:"Privacidad, seguridad e idioma del nodo",
-    s_hideip:"Ocultar IP a otros usuarios", s_hideip_desc:"El servidor enruta los mensajes y nunca reenvía tu IP a otros clientes.",
-    s_e2e:"Cifrado de extremo a extremo", s_e2e_desc:"Las claves se generan y procesan solo en tu dispositivo.",
-    s_antixss:"Saneamiento anti-XSS", s_antixss_desc:"Cada mensaje se neutraliza antes de mostrarse en pantalla.",
-    s_ephemeral:"Mensajes efímeros", s_ephemeral_desc:"Elimina automáticamente los mensajes tras leerse.",
-    s_lang:"Idioma", s_lang_desc:"Cambia el idioma de la interfaz", s_fingerprint:"Huella de clave pública",
-    admin_title:"Panel de control", admin_sub:"Visible solo para quien cruzó el portal con la respuesta correcta",
-    admin_users:"Usuarios conectados", admin_channels:"Canales activos", admin_ddos:"Intentos bloqueados (anti-DDoS)",
-    admin_xss:"Payloads XSS neutralizados", admin_uptime:"Nodo activo desde",
-    admin_note:"Nota: esta demo funciona en el cliente. El backend real (bot de Discord + servidor) aplica el límite de tasa y los controles de seguridad aquí descritos.",
-    gate_wrong:"Respuesta incorrecta. El sello no se abre.", you:"Tú",
-    dm_empty:"No hay otros usuarios conectados ahora mismo", conn_error:"No se pudo conectar al nodo. ¿Está encendido el servidor?", connecting:"Conectando al nodo..."
-  },
-  fr: {
-    gate_title:"OMEGA CORE", gate_sub:"Le portail est scellé. Seul celui qui connaît le nom peut entrer.",
-    gate_q:"Comment t'appelles-tu ?", gate_enter:"FRANCHIR LE SEUIL", gate_skip:"Entrer en invité anonyme",
-    guest:"Invité", server_sub:"nœud principal · chiffré", grp_public:"Chat publique", grp_private:"Messages privés",
-    ch_salone:"#grande-salle", salone_desc:"la place du nœud", e2e_on:"chiffré de bout en bout",
-    msg_placeholder:"Écris un message chiffré...", composer_hint:"IP masquée · clés générées localement · aucun journal en clair",
-    grp_online:"Présents", settings_title:"Paramètres", settings_sub:"Confidentialité, sécurité et langue du nœud",
-    s_hideip:"Masquer l'IP aux autres utilisateurs", s_hideip_desc:"Le serveur relaie les messages et ne transmet jamais ton IP aux autres clients.",
-    s_e2e:"Chiffrement de bout en bout", s_e2e_desc:"Les clés sont générées et traitées uniquement sur ton appareil.",
-    s_antixss:"Assainissement anti-XSS", s_antixss_desc:"Chaque message est neutralisé avant d'être affiché.",
-    s_ephemeral:"Messages éphémères", s_ephemeral_desc:"Supprime automatiquement les messages après lecture.",
-    s_lang:"Langue", s_lang_desc:"Changer la langue de l'interface", s_fingerprint:"Empreinte de clé publique",
-    admin_title:"Panneau de contrôle", admin_sub:"Visible uniquement par ceux qui ont franchi le seuil avec la bonne réponse",
-    admin_users:"Utilisateurs connectés", admin_channels:"Canaux actifs", admin_ddos:"Tentatives bloquées (anti-DDoS)",
-    admin_xss:"Payloads XSS neutralisés", admin_uptime:"Nœud actif depuis",
-    admin_note:"Note : cette démo s'exécute côté client. Le backend réel (bot Discord + serveur) applique la limitation de débit et les contrôles de sécurité décrits ici.",
-    gate_wrong:"Mauvaise réponse. Le sceau ne s'ouvre pas.", you:"Toi",
-    dm_empty:"Aucun autre utilisateur connecté pour le moment", conn_error:"Impossible de se connecter au nœud. Le serveur est-il actif ?", connecting:"Connexion au nœud..."
-  },
-  de: {
-    gate_title:"OMEGA CORE", gate_sub:"Das Tor ist versiegelt. Nur wer den Namen kennt, darf eintreten.",
-    gate_q:"Wie heißt du?", gate_enter:"SCHWELLE ÜBERSCHREITEN", gate_skip:"Als anonymer Gast eintreten",
-    guest:"Gast", server_sub:"Primärknoten · verschlüsselt", grp_public:"Öffentlicher Chat", grp_private:"Private Nachrichten",
-    ch_salone:"#große-halle", salone_desc:"der Platz des Knotens", e2e_on:"Ende-zu-Ende verschlüsselt",
-    msg_placeholder:"Verschlüsselte Nachricht schreiben...", composer_hint:"IP verborgen · Schlüssel lokal erzeugt · keine Klartext-Protokolle",
-    grp_online:"Anwesend", settings_title:"Einstellungen", settings_sub:"Datenschutz, Sicherheit und Sprache des Knotens",
-    s_hideip:"IP vor anderen Nutzern verbergen", s_hideip_desc:"Der Server leitet Nachrichten weiter und gibt deine IP nie an andere Clients weiter.",
-    s_e2e:"Ende-zu-Ende-Verschlüsselung", s_e2e_desc:"Schlüssel werden nur auf deinem Gerät erzeugt und verarbeitet.",
-    s_antixss:"Anti-XSS-Bereinigung", s_antixss_desc:"Jede Nachricht wird neutralisiert, bevor sie angezeigt wird.",
-    s_ephemeral:"Flüchtige Nachrichten", s_ephemeral_desc:"Löscht Nachrichten automatisch nach dem Lesen.",
-    s_lang:"Sprache", s_lang_desc:"Oberflächensprache ändern", s_fingerprint:"Fingerabdruck des öffentlichen Schlüssels",
-    admin_title:"Kontrollpanel", admin_sub:"Nur sichtbar für die, die die Schwelle mit der richtigen Antwort überschritten haben",
-    admin_users:"Verbundene Nutzer", admin_channels:"Aktive Kanäle", admin_ddos:"Blockierte Versuche (Anti-DDoS)",
-    admin_xss:"Neutralisierte XSS-Payloads", admin_uptime:"Knoten aktiv seit",
-    admin_note:"Hinweis: Diese Demo läuft clientseitig. Das echte Backend (Discord-Bot + Server) setzt das hier beschriebene Rate-Limiting und die Sicherheitsprüfungen um.",
-    gate_wrong:"Falsche Antwort. Das Siegel öffnet sich nicht.", you:"Du",
-    dm_empty:"Aktuell sind keine anderen Nutzer verbunden", conn_error:"Verbindung zum Knoten fehlgeschlagen. Läuft der Server?", connecting:"Verbindung zum Knoten..."
-  }
-};
-let currentLang = 'it';
-function applyI18n(){
-  const dict = I18N[currentLang];
-  document.querySelectorAll('[data-i18n]').forEach(el=>{
-    const key = el.getAttribute('data-i18n');
-    if(dict[key]) el.textContent = dict[key];
-  });
-  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{
-    const key = el.getAttribute('data-i18n-ph');
-    if(dict[key]) el.setAttribute('placeholder', dict[key]);
-  });
-  document.documentElement.lang = currentLang;
-}
-
-/* ---------- Anti-XSS: sanificazione centralizzata ---------- */
-// Ogni testo utente passa SEMPRE da qui prima di finire nel DOM.
-// Non usiamo mai innerHTML con testo grezzo: solo con l'output di escapeHTML.
-let xssBlockedCount = 0;
-function escapeHTML(str){
-  const map = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
-  return String(str).replace(/[&<>"']/g, ch => map[ch]);
-}
-function sanitizeIncoming(str){
-  // rimuove pattern chiaramente ostili prima ancora dell'escaping (difesa aggiuntiva)
-  const suspicious = /<\s*script|javascript:|on\w+\s*=/i;
-  if(suspicious.test(str)) xssBlockedCount++;
-  return escapeHTML(str).slice(0, 2000); // limite lunghezza messaggio
-}
-
-/* ---------- Crypto: chiavi ECDH + cifratura AES-GCM ----------
-   La coppia di chiavi è generata nel browser e la chiave privata non
-   lascia mai il dispositivo. Per la chat pubblica usiamo una chiave
-   simmetrica condivisa (derivata via PBKDF2): il server non la conosce,
-   quindi non può leggere i messaggi anche se li inoltra. Per i DM
-   deriviamo, per ogni coppia di utenti, una chiave AES condivisa via
-   ECDH a partire dalle rispettive chiavi pubbliche scambiate tramite
-   il server (il server vede solo blob cifrati, mai il testo). */
-let myKeyPair = null;
-let myFingerprint = '----';
-const peerAesKeys = new Map(); // nome peer -> CryptoKey AES condivisa (DM)
-let roomKeyPromise = null;
-
-async function initCrypto(){
-  try{
-    myKeyPair = await crypto.subtle.generateKey(
-      { name:"ECDH", namedCurve:"P-256" }, true, ["deriveKey","deriveBits"]
-    );
-    const raw = await crypto.subtle.exportKey("raw", myKeyPair.publicKey);
-    const hash = await crypto.subtle.digest("SHA-256", raw);
-    const bytes = Array.from(new Uint8Array(hash)).slice(0,8);
-    myFingerprint = bytes.map(b=>b.toString(16).padStart(2,'0')).join(':');
-  }catch(e){
-    myFingerprint = 'n/d';
-  }
-  document.getElementById('my-fingerprint').textContent = myFingerprint;
-}
-
-function abToBase64(buf){
-  let binary=''; const bytes=new Uint8Array(buf);
-  for(let i=0;i<bytes.byteLength;i++) binary += String.fromCharCode(bytes[i]);
-  return btoa(binary);
-}
-function base64ToArrayBuffer(b64){
-  const binary = atob(b64);
-  const bytes = new Uint8Array(binary.length);
-  for(let i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
-  return bytes.buffer;
-}
-async function exportPubKeyBase64(pubKey){
-  return abToBase64(await crypto.subtle.exportKey('raw', pubKey));
-}
-async function aesEncrypt(key, plaintext){
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const encoded = new TextEncoder().encode(plaintext);
-  const ctBuf = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, encoded);
-  const combined = new Uint8Array(iv.length + ctBuf.byteLength);
-  combined.set(iv, 0); combined.set(new Uint8Array(ctBuf), iv.length);
-  return abToBase64(combined.buffer);
-}
-async function aesDecrypt(key, b64){
-  try{
-    const bytes = new Uint8Array(base64ToArrayBuffer(b64));
-    const iv = bytes.slice(0,12);
-    const ct = bytes.slice(12);
-    const plainBuf = await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, ct);
-    return new TextDecoder().decode(plainBuf);
-  }catch(e){ return null; }
-}
-function getRoomKey(){
-  if(!roomKeyPromise) roomKeyPromise = (async ()=>{
-    const passBytes = new TextEncoder().encode('omega-core-public-room-v1');
-    const keyMaterial = await crypto.subtle.importKey('raw', passBytes, {name:'PBKDF2'}, false, ['deriveKey']);
-    return crypto.subtle.deriveKey(
-      {name:'PBKDF2', salt:new TextEncoder().encode('omega-core-salt-v1'), iterations:100000, hash:'SHA-256'},
-      keyMaterial, {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']
-    );
-  })();
-  return roomKeyPromise;
-}
-async function getPeerAesKey(name){
-  if(peerAesKeys.has(name)) return peerAesKeys.get(name);
-  const peer = peers.get(name);
-  if(!peer || !peer.pubkey) return null;
-  try{
-    const pubKeyObj = await crypto.subtle.importKey('raw', base64ToArrayBuffer(peer.pubkey), {name:'ECDH', namedCurve:'P-256'}, true, []);
-    const aesKey = await crypto.subtle.deriveKey({name:'ECDH', public:pubKeyObj}, myKeyPair.privateKey, {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']);
-    peerAesKeys.set(name, aesKey);
-    return aesKey;
-  }catch(e){ return null; }
-}
-
-/* ---------- WebSocket: connessione al server ----------
-   Protocollo a messaggi JSON, request/response simulato con un piccolo
-   bus di eventi (onceMessage) per attendere la risposta del server a
-   join / admin_auth senza bloccare l'interfaccia. */
-let ws = null;
-let mySessionId = null;
-const wsBus = new EventTarget();
-
-function wsUrl(){
-  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${proto}//${location.host}`;
-}
-function onceMessage(type, timeoutMs=8000){
-  return new Promise((resolve, reject)=>{
-    const timer = setTimeout(()=>{ wsBus.removeEventListener(type, handler); reject(new Error('timeout')); }, timeoutMs);
-    function handler(e){ clearTimeout(timer); resolve(e.detail); }
-    wsBus.addEventListener(type, handler, {once:true});
-  });
-}
-function ensureConnected(){
-  if(ws && ws.readyState === WebSocket.OPEN) return Promise.resolve();
-  return new Promise((resolve, reject)=>{
-    ws = new WebSocket(wsUrl());
-    ws.addEventListener('open', ()=> resolve());
-    ws.addEventListener('error', ()=> reject(new Error('ws_error')));
-    ws.addEventListener('message', onWsMessage);
-    ws.addEventListener('close', onWsClose);
-  });
-}
-function onWsMessage(event){
-  let msg;
-  try{ msg = JSON.parse(event.data); }catch{ return; }
-  if(!msg || !msg.type) return;
-  switch(msg.type){
-    case 'welcome': mySessionId = msg.sessionId; break;
-    case 'system': pushMessage('salone', {system:true, text: msg.text}); break;
-    case 'presence': updatePresence(msg.users); break;
-    case 'public_message': handleIncomingPublic(msg); break;
-    case 'private_message': handleIncomingPrivate(msg); break;
-    case 'error':
-      if(msg.code === 'rate_limited' || msg.code === 'invalid_payload' || msg.code === 'user_not_found'){
-        pushMessage(activeChannel, {system:true, text: msg.message || 'Errore'});
-      }
-      break;
-    default: break;
-  }
-  wsBus.dispatchEvent(new CustomEvent(msg.type, {detail: msg}));
-}
-function onWsClose(){
-  if(document.getElementById('app').classList.contains('active')){
-    pushMessage(activeChannel, {system:true, text:'Connessione al nodo interrotta.'});
-  }
-}
-
-/* ---------- Admin gate: domanda segreta ----------
-   La risposta viene verificata SOLO dal server (hash bcrypt lato
-   server, mai in chiaro nel client). Ogni socket ha un numero massimo
-   di tentativi prima della disconnessione forzata — è il server a
-   farlo rispettare, non il browser. */
-let isAdmin = false;
-let ddosBlocked = 0;
-
-async function tryGateAnswer(){
-  const input = document.getElementById('gate-answer').value;
-  const errorEl = document.getElementById('gate-error');
-  errorEl.textContent = I18N[currentLang].connecting;
-  try{ await ensureConnected(); }
-  catch(e){ errorEl.textContent = I18N[currentLang].conn_error; return; }
-
-  ws.send(JSON.stringify({type:'admin_auth', answer: input}));
-  let result;
-  try{ result = await onceMessage('admin_auth_result'); }
-  catch(e){ errorEl.textContent = I18N[currentLang].conn_error; return; }
-
-  if(result.ok){
-    isAdmin = true;
-    errorEl.textContent = '';
-    await joinAndEnter(input.trim() || 'Admin', true);
-  } else {
-    if(result.reason === 'too_many_attempts') ddosBlocked++;
-    errorEl.textContent = I18N[currentLang].gate_wrong;
-  }
-}
-
-/* ---------- App state / chat ---------- */
-const chatState = new Map();   // nome canale ('salone' o nome peer) -> array messaggi
-const peers = new Map();       // nome peer -> {name, isAdmin, pubkey}
-let activeChannel = 'salone';
-let myName = 'Ospite';
-let myId = '----';
-
-function nowTime(){
-  const d = new Date();
-  return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
-}
-function avatarInitials(name){
-  return (name||'??').slice(0,2).toUpperCase();
-}
-function pushMessage(ch, m){
-  if(!chatState.has(ch)) chatState.set(ch, []);
-  chatState.get(ch).push(m);
-  if(activeChannel === ch) renderMessages();
-}
-function renderMessages(){
-  const box = document.getElementById('messages');
-  box.innerHTML = '';
-  (chatState.get(activeChannel) || []).forEach(m=>{
-    const row = document.createElement('div');
-    if(m.system){
-      row.className = 'msg system';
-      row.innerHTML = `<div class="msg-body"><div class="msg-text">${escapeHTML(m.text)}</div></div>`;
-    } else {
-      row.className = 'msg';
-      const peerIsAdmin = peers.get(m.name)?.isAdmin;
-      const adminClass = (m.name === myName && isAdmin) || peerIsAdmin ? ' admin' : '';
-      row.innerHTML = `
-        <div class="avatar-mini">${escapeHTML(avatarInitials(m.name))}</div>
-        <div class="msg-body">
-          <div class="msg-meta">
-            <span class="msg-name${adminClass}">${escapeHTML(m.name)}</span>
-            <svg class="msg-lock" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="1"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
-            <span class="msg-time">${escapeHTML(m.time)}</span>
+      <div class="panel-footer">
+        <div class="user-badge">
+          <div class="user-avatar" id="user-avatar-mini">??</div>
+          <div class="user-info">
+            <div class="user-name" id="user-name-display">Guest</div>
+            <div class="user-id" id="user-id-display">id: ----</div>
           </div>
-          <div class="msg-text">${sanitizeIncoming(m.text)}</div>
-        </div>`;
-    }
-    box.appendChild(row);
-  });
-  box.scrollTop = box.scrollHeight;
-}
+        </div>
+      </div>
+    </aside>
 
-function switchChannel(ch){
-  activeChannel = ch;
-  document.querySelectorAll('.ch-item').forEach(el=> el.classList.toggle('active', el.dataset.channel===ch));
-  if(ch === 'salone'){
-    document.getElementById('main-ch-name').textContent = I18N[currentLang].ch_salone;
-    document.getElementById('main-ch-desc').textContent = I18N[currentLang].salone_desc;
-    document.getElementById('main-ch-desc').style.display = 'inline';
-  } else {
-    document.getElementById('main-ch-name').textContent = ch;
-    document.getElementById('main-ch-desc').style.display = 'none';
-  }
-  if(!chatState.has(ch)) chatState.set(ch, [{system:true, text:'Canale privato cifrato E2E'}]);
-  renderMessages();
-}
+    <!-- MAIN CONTENT AREA -->
+    <main class="main-area">
+      <header class="main-header">
+        <div class="header-left">
+          <h1 class="channel-title" id="channel-title">#general</h1>
+          <p class="channel-description" id="channel-description" data-i18n="channel_desc">Welcome to Omega Core</p>
+        </div>
+        <div class="header-right">
+          <div class="e2e-badge">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <rect x="5" y="11" width="14" height="9" rx="1" fill="none" stroke="currentColor" stroke-width="2"/>
+              <path d="M8 11V7a4 4 0 018 0v4" fill="none" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <span data-i18n="e2e_encrypted">end-to-end encrypted</span>
+          </div>
+        </div>
+      </header>
 
-function renderDmList(){
-  const container = document.getElementById('dm-list');
-  const hint = document.getElementById('dm-empty-hint');
-  container.innerHTML = '';
-  const names = Array.from(peers.keys());
-  hint.style.display = names.length ? 'none' : 'block';
-  names.forEach(name=>{
-    const div = document.createElement('div');
-    div.className = 'ch-item' + (activeChannel===name ? ' active' : '');
-    div.dataset.channel = name;
-    div.innerHTML = `<svg class="lock" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="1"/><path d="M8 11V7a4 4 0 018 0v4"/></svg> ${escapeHTML(name)}`;
-    div.addEventListener('click', ()=> switchChannel(name));
-    container.appendChild(div);
-  });
-}
-function renderMemberList(){
-  const container = document.getElementById('member-list');
-  container.innerHTML = '';
-  peers.forEach((u, name)=>{
-    const div = document.createElement('div');
-    div.className = 'member';
-    const adminTag = u.isAdmin ? ' <span style="color:var(--blood-bright); font-size:9.5px; letter-spacing:.05em;">ADMIN</span>' : '';
-    div.innerHTML = `<div class="avatar-mini">${escapeHTML(avatarInitials(name))}</div><div class="member-name">${escapeHTML(name)}${adminTag}</div>`;
-    container.appendChild(div);
-  });
-}
-function updatePresence(users){
-  peers.clear();
-  users.forEach(u=>{ if(u.name !== myName) peers.set(u.name, u); });
-  renderDmList();
-  renderMemberList();
-  document.getElementById('online-count').textContent = users.length;
-}
+      <div class="messages-container" id="messages-container">
+        <div class="message-group">
+          <div class="system-message" data-i18n="welcome_message">Welcome to Omega Core — encrypted communication platform</div>
+        </div>
+      </div>
 
-async function handleIncomingPublic(msg){
-  const key = await getRoomKey();
-  const text = await aesDecrypt(key, msg.ciphertext);
-  pushMessage('salone', {name: msg.from, text: text===null ? '[messaggio non decifrabile]' : text, time: nowTime()});
-}
-async function handleIncomingPrivate(msg){
-  const key = await getPeerAesKey(msg.from);
-  let text = '[chiave del mittente non disponibile]';
-  if(key){
-    const dec = await aesDecrypt(key, msg.ciphertext);
-    text = dec===null ? '[messaggio non decifrabile]' : dec;
-  }
-  pushMessage(msg.from, {name: msg.from, text, time: nowTime()});
-}
+      <footer class="message-footer">
+        <div class="message-composer">
+          <input type="text" id="message-input" class="message-input" data-i18n-ph="message_placeholder" placeholder="Write an encrypted message...">
+          <button id="send-button" class="send-button">
+            <svg viewBox="0 0 24 24" width="20" height="20">
+              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4z" fill="none" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </button>
+        </div>
+        <div class="composer-hint" data-i18n="composer_hint">End-to-end encrypted • Keys generated locally • No plaintext logs</div>
+      </footer>
+    </main>
 
-async function sendMessage(){
-  const input = document.getElementById('msg-input');
-  const text = input.value.trim();
-  if(!text || !ws || ws.readyState !== WebSocket.OPEN) return;
-  input.value = '';
-  pushMessage(activeChannel, {name: myName, text, time: nowTime()}); // il nostro stesso messaggio lo vediamo in chiaro localmente
-  try{
-    if(activeChannel === 'salone'){
-      const key = await getRoomKey();
-      const ciphertext = await aesEncrypt(key, text);
-      ws.send(JSON.stringify({type:'public_message', ciphertext}));
-    } else {
-      const key = await getPeerAesKey(activeChannel);
-      if(!key){ pushMessage(activeChannel, {system:true, text:'Chiave del destinatario non ancora disponibile.'}); return; }
-      const ciphertext = await aesEncrypt(key, text);
-      ws.send(JSON.stringify({type:'private_message', to: activeChannel, ciphertext}));
-    }
-  }catch(e){
-    pushMessage(activeChannel, {system:true, text:'Errore di cifratura o invio del messaggio.'});
-  }
-}
+    <!-- RIGHT SIDEBAR - ONLINE USERS -->
+    <aside class="members-panel">
+      <div class="members-header">
+        <h3 class="members-title" data-i18n="section_members">Online Members</h3>
+        <span class="members-count" id="members-count">1</span>
+      </div>
+      <div id="members-list" class="members-list">
+        <div class="member-item">
+          <div class="member-avatar" id="member-avatar-self">??</div>
+          <div class="member-info">
+            <div class="member-name" id="member-name-self">You</div>
+            <div class="member-status">yourself</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
 
-/* ---------- Gate → App transition ---------- */
-async function joinAndEnter(name, admin){
-  const pubkeyB64 = await exportPubKeyBase64(myKeyPair.publicKey);
-  ws.send(JSON.stringify({type:'join', name, pubkey: pubkeyB64}));
-  let joined;
-  try{ joined = await onceMessage('joined'); }
-  catch(e){ document.getElementById('gate-error').textContent = I18N[currentLang].conn_error; return; }
-  enterApp(joined.name, admin);
-}
-function enterApp(name, admin){
-  myName = name;
-  myId = mySessionId ? mySessionId.slice(0,4) : '----';
-  document.getElementById('gate').style.display = 'none';
-  document.getElementById('app').classList.add('active');
-  document.getElementById('my-uname').textContent = myName;
-  document.getElementById('my-uid').textContent = 'id: ' + myId;
-  document.getElementById('my-avatar').textContent = avatarInitials(myName);
-  document.getElementById('my-avatar-2').textContent = avatarInitials(myName);
-  document.getElementById('member-you').textContent = myName + ' (' + I18N[currentLang].you + ')';
-  if(admin) document.getElementById('admin-rail-btn').style.display = 'flex';
-  chatState.set('salone', [{system:true, text:'— canale cifrato aperto —'}]);
-  switchChannel('salone');
-  startUptimeClock();
-}
+  <!-- SETTINGS MODAL -->
+  <div id="settings-modal" class="modal" style="display: none;">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" data-i18n="settings_title">Settings</h2>
+        <button id="settings-close" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="settings-section">
+          <div class="setting-item">
+            <div class="setting-label" data-i18n="setting_language">Language</div>
+            <select id="language-select" class="setting-select">
+              <option value="en">English</option>
+              <option value="ru">Русский</option>
+            </select>
+          </div>
+        </div>
 
-/* ---------- Admin panel stats ---------- */
-let startTime = Date.now();
-function startUptimeClock(){
-  setInterval(()=>{
-    const diff = Math.floor((Date.now()-startTime)/1000);
-    const h = String(Math.floor(diff/3600)).padStart(2,'0');
-    const m = String(Math.floor((diff%3600)/60)).padStart(2,'0');
-    const s = String(diff%60).padStart(2,'0');
-    const el = document.getElementById('stat-uptime');
-    if(el) el.textContent = `${h}:${m}:${s}`;
-    const ddosEl = document.getElementById('stat-ddos');
-    if(ddosEl) ddosEl.textContent = ddosBlocked;
-    const xssEl = document.getElementById('stat-xss');
-    if(xssEl) xssEl.textContent = xssBlockedCount;
-    const usersEl = document.getElementById('stat-users');
-    if(usersEl) usersEl.textContent = peers.size + 1;
-  }, 1000);
-}
+        <div class="settings-divider"></div>
 
-/* ---------- Wiring ---------- */
-document.getElementById('gate-submit').addEventListener('click', tryGateAnswer);
-document.getElementById('gate-answer').addEventListener('keydown', e=>{ if(e.key==='Enter') tryGateAnswer(); });
-document.getElementById('gate-skip').addEventListener('click', async ()=>{
-  const errorEl = document.getElementById('gate-error');
-  errorEl.textContent = I18N[currentLang].connecting;
-  try{ await ensureConnected(); }
-  catch(e){ errorEl.textContent = I18N[currentLang].conn_error; return; }
-  errorEl.textContent = '';
-  await joinAndEnter(I18N[currentLang].guest, false);
-});
+        <div class="settings-section">
+          <h3 class="section-title" data-i18n="security_settings">Security</h3>
+          <div class="setting-item">
+            <div class="setting-label" data-i18n="setting_e2e">End-to-End Encryption</div>
+            <div class="setting-description" data-i18n="setting_e2e_desc">Keys generated and managed locally on your device</div>
+            <div class="toggle-switch on" id="toggle-e2e"></div>
+          </div>
+          <div class="setting-item">
+            <div class="setting-label" data-i18n="setting_xss_protection">Anti-XSS Protection</div>
+            <div class="setting-description" data-i18n="setting_xss_desc">Sanitize all incoming messages</div>
+            <div class="toggle-switch on" id="toggle-xss"></div>
+          </div>
+        </div>
 
-document.getElementById('send-btn').addEventListener('click', sendMessage);
-document.getElementById('msg-input').addEventListener('keydown', e=>{ if(e.key==='Enter') sendMessage(); });
+        <div class="settings-divider"></div>
 
-document.getElementById('open-settings').addEventListener('click', ()=> document.getElementById('settings-overlay').classList.add('active'));
-document.getElementById('admin-rail-btn').addEventListener('click', ()=> document.getElementById('admin-overlay').classList.add('active'));
-document.querySelectorAll('.modal-close').forEach(btn=>{
-  btn.addEventListener('click', ()=> document.getElementById(btn.dataset.close).classList.remove('active'));
-});
-document.querySelectorAll('.modal-overlay').forEach(ov=>{
-  ov.addEventListener('click', e=>{ if(e.target === ov) ov.classList.remove('active'); });
-});
-document.querySelectorAll('.toggle').forEach(t=>{
-  t.addEventListener('click', ()=> t.classList.toggle('on'));
-});
-document.getElementById('lang-select').addEventListener('change', e=>{
-  currentLang = e.target.value;
-  applyI18n();
-  switchChannel(activeChannel);
-});
+        <div class="settings-section">
+          <h3 class="section-title" data-i18n="privacy_section">Privacy</h3>
+          <div class="setting-item">
+            <div class="setting-label" data-i18n="setting_hide_ip">Hide IP Address</div>
+            <div class="setting-description" data-i18n="setting_hide_ip_desc">Your IP is never shared with other users</div>
+            <div class="toggle-switch on" id="toggle-hide-ip"></div>
+          </div>
+          <div class="setting-item">
+            <div class="setting-label" data-i18n="setting_key_fingerprint">Public Key Fingerprint</div>
+            <div class="fingerprint-display" id="key-fingerprint">----</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-/* ---------- Init ---------- */
-applyI18n();
-initCrypto();
-</script>
+  <!-- ADMIN PANEL MODAL -->
+  <div id="admin-modal" class="modal" style="display: none;">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" data-i18n="admin_panel">Control Panel <span class="admin-badge">ADMIN</span></h2>
+        <button id="admin-close" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="admin-stats">
+          <div class="stat-item">
+            <div class="stat-label" data-i18n="stat_users">Connected Users</div>
+            <div class="stat-value" id="stat-users">1</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label" data-i18n="stat_uptime">Uptime</div>
+            <div class="stat-value" id="stat-uptime">00:00:00</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label" data-i18n="stat_xss_blocked">XSS Attempts Blocked</div>
+            <div class="stat-value" id="stat-xss">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label" data-i18n="stat_ddos_blocked">DDoS Attempts Blocked</div>
+            <div class="stat-value" id="stat-ddos">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>
